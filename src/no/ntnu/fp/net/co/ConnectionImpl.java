@@ -130,14 +130,15 @@ public class ConnectionImpl extends AbstractConnection {
     public void send(String msg) throws ConnectException, IOException {
         //throw new NotImplementedException();
     	KtnDatagram packet = constructDataPacket(msg);
-    	packet.setFlag(Flag.SYN_ACK);
-    	try {
-    		simplySendPacket(packet);
-    	} catch (IOException e) {
-    		System.out.println("ioexception");
-    	} catch (ClException e) {
-    		System.out.println("clexception");
-    	}
+    	sendDataPacketWithRetransmit(packet);
+    	KtnDatagram received = receiveAck();
+//    	try {
+//    		simplySendPacket(packet);
+//    	} catch (IOException e) {
+//    		System.out.println("ioexception");
+//    	} catch (ClException e) {
+//    		System.out.println("clexception");
+//    	}
     }
 
     /**
@@ -164,7 +165,14 @@ public class ConnectionImpl extends AbstractConnection {
      * @see Connection#close()
      */
     public void close() throws IOException {
-    	state = State.CLOSED;
+    	//state = State.CLOSED;
+    	
+    	KtnDatagram packet = constructInternalPacket(Flag.FIN);
+    	sendDataPacketWithRetransmit(packet);
+    	KtnDatagram received = receiveAck();
+    	
+    	KtnDatagram receivedPacket = receivePacket(true);
+    	sendAck(constructInternalPacket(Flag.ACK), false);
     }
 
     /**
