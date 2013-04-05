@@ -91,7 +91,7 @@ public class ConnectionImpl extends AbstractConnection {
     	
     	KtnDatagram received = receiveAck();
     	
-    	sendAck(received, false);
+    	sendAck(constructInternalPacket(Flag.ACK), false);
     	
     }
 
