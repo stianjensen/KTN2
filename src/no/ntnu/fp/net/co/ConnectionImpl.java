@@ -89,10 +89,10 @@ public class ConnectionImpl extends AbstractConnection {
     		System.out.println("clexception");
     	}
     	
-    	KtnDatagram returnPacket = receiveAck();
-    	System.out.println(returnPacket);
+    	KtnDatagram received = receiveAck();
     	
-    	sendAck(returnPacket, false);
+    	sendAck(received, false);
+    	
     }
 
     /**
@@ -104,7 +104,12 @@ public class ConnectionImpl extends AbstractConnection {
     public Connection accept() throws IOException, SocketTimeoutException {
         //throw new NotImplementedException();
     	System.out.println("accept");
-    	receivePacket();
+    	KtnDatagram packet = receivePacket(true);
+    	
+    	sendAck(packet, true);
+    	
+    	KtnDatagram ack = receiveAck();
+    	// her skal man nok passe på at ACK-en stemmer (siden det kan være feil i nivå 2)
     	System.out.println("accepted");
     	
     	return this;
@@ -124,7 +129,7 @@ public class ConnectionImpl extends AbstractConnection {
      */
     public void send(String msg) throws ConnectException, IOException {
         //throw new NotImplementedException();
-    	KtnDatagram packet = constructDataPacket("Hello world.");
+    	KtnDatagram packet = constructDataPacket(msg);
     	packet.setFlag(Flag.SYN_ACK);
     	try {
     		simplySendPacket(packet);
@@ -148,8 +153,9 @@ public class ConnectionImpl extends AbstractConnection {
     	System.out.println("datoramagram");
     	KtnDatagram packet = receivePacket(true);
     	System.out.println("packolini: " + packet);
-    	sendAck(packet, true);
-    	return "#yolo";
+    	sendAck(packet, false);
+    	return (String) packet.getPayload();
+    	// her bør vi finne en måte å returnere meldingen fra pakken... toString() (oh, please god!) eller (*grøss*) (String) Object.getStuff()...
     }
 
     /**
