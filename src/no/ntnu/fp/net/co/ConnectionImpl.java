@@ -181,7 +181,6 @@ public class ConnectionImpl extends AbstractConnection {
     		if(resends < MAXRESENDS) {
     			resends++;
     			send(msg); //kaller seg selv. hvis vi fortsatt ikke mottar ACK, return
-    			resends = 0;
     			return;
     		}
     		else {
@@ -189,9 +188,9 @@ public class ConnectionImpl extends AbstractConnection {
     			state = State.CLOSED;
     			System.out.println("Connection lost");
     		}
+    	} else {
+    		resends = 0;
     	}
-    	
-    	
     }
 
     /**
