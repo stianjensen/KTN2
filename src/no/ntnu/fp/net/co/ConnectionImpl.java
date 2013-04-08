@@ -206,7 +206,7 @@ public class ConnectionImpl extends AbstractConnection {
     	System.out.println("datoramagram");
     	KtnDatagram packet;
 		try {
-			packet = receivePacket(true);
+			packet = receivePacket(false);
 		} catch (EOFException e) {
 			state = State.CLOSE_WAIT;
 			throw new EOFException();
@@ -244,7 +244,7 @@ public class ConnectionImpl extends AbstractConnection {
     			throw new IOException();
     		}
     		KtnDatagram fin = receivePacket(true);
-    		if (fin != null || fin.getFlag() == Flag.FIN) {
+    		if (fin != null && fin.getFlag() == Flag.FIN) {
     			sendAck(fin, false);
     			state = State.TIME_WAIT;
     			try {
@@ -266,19 +266,11 @@ public class ConnectionImpl extends AbstractConnection {
 			}
     		state = State.LAST_ACK;
     		KtnDatagram closeAck = receiveAck();
-    		if (closeAck != null || closeAck.getFlag() == Flag.ACK){
+    		if (closeAck != null && closeAck.getFlag() == Flag.ACK){
     			state = State.CLOSED;
     		}
     		break;
     	}
-    	
-    	state = State.FIN_WAIT_1;
-    	KtnDatagram received = receiveAck();
-    	state = State.FIN_WAIT_2;
-    	KtnDatagram receivedPacket = receivePacket(true);
-    	sendAck(constructInternalPacket(Flag.ACK), false);
-    	state = State.TIME_WAIT;
-    	state = State.CLOSED;
     }
 
     /**
