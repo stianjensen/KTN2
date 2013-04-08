@@ -73,7 +73,7 @@ public class ConnectionImpl extends AbstractConnection {
     }
     
     private int getNewPort() {
-    	return (int) Math.random()*30000+10000;
+    	return (int) (Math.random()*30000+10000);
     }
 
     /**
