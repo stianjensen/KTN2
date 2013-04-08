@@ -42,7 +42,7 @@ public class ConnectionImpl extends AbstractConnection {
 	private final int MAXRECEIVES = 5;
 	private int resends = 0;
 	private int receives = 0;
-	private KtnDatagram oldPacket;
+	private KtnDatagram oldPacket = null;
 
 
 	/**
@@ -227,9 +227,10 @@ public class ConnectionImpl extends AbstractConnection {
 			System.out.println("packolini: " + packet);
 			if (isValid(packet)) {
 				sendAck(packet, false);
-				packet = oldPacket;
+				oldPacket = packet;
 				return (String) packet.getPayload();
 			} else {
+				System.out.println("!!!!!!wrong checksum!!!!!");
 				sendAck(oldPacket, false);
 				return receive();
 			}
