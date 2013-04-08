@@ -195,13 +195,9 @@ public class ConnectionImpl extends AbstractConnection {
 		} else {
 			if (!isValid(received)){
 				System.out.println("Checksum on ack not valid");
-				if (resends < MAXRESENDS) {
-					resends++;
-					send(msg); //kaller seg selv. hvis vi fortsatt ikke mottar ACK, return
-					resends = 0;
-					return;
-				}
-				
+				nextSequenceNo--;
+				send(msg); //kaller seg selv. hvis vi fortsatt ikke mottar ACK, return
+				return;
 			} else if (received.getAck() < nextSequenceNo-1) {
 				System.out.println("recieved ack for previous packet, renseding. ");
 				nextSequenceNo--;
@@ -209,12 +205,9 @@ public class ConnectionImpl extends AbstractConnection {
 				return;
 			} else if (received.getAck() > nextSequenceNo-1) {
 				System.out.println("Requested sequence number to high. ");
-				if (resends < MAXRESENDS) {
-					resends++;
-					send(msg); //kaller seg selv. hvis vi fortsatt ikke mottar ACK, return
-					resends = 0;
-					return;
-				}
+				nextSequenceNo--;
+				send(msg); //kaller seg selv. hvis vi fortsatt ikke mottar ACK, return
+				return;
 			}
 		}
 	}
@@ -248,7 +241,7 @@ public class ConnectionImpl extends AbstractConnection {
 				state = state.CLOSED;
 				throw new ConnectException();
 			}
-		} else if (!packet.getSrc_addr().equals(this.remoteAddress) || packet.getSrc_port() != (this.remotePort)){
+		} else if (!packet.getSrc_addr().equals(this.remoteAddress) || packet.getSrc_port() != this.remotePort) {
 			System.out.println("unrecognized sender, CALL THE GHOAST-BUSTERS!");
 			return receive();
 		} else {
