@@ -277,6 +277,7 @@ public class ConnectionImpl extends AbstractConnection {
 		case SYN_RCVD:
 		case ESTABLISHED:
 			KtnDatagram packet = constructInternalPacket(Flag.FIN);
+			System.out.println("sending fin flag with snr. " + packet.getSeq_nr());
 			try {
 				simplySendPacket(packet);
 			} catch (IOException e) {
@@ -298,7 +299,7 @@ public class ConnectionImpl extends AbstractConnection {
 				sendAck(fin, false);
 				state = State.TIME_WAIT;
 				try {
-					wait(TIMEOUT);
+					Thread.currentThread().sleep(1000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
