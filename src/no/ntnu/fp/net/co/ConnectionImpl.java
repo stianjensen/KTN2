@@ -195,20 +195,26 @@ public class ConnectionImpl extends AbstractConnection {
 		} else {
 			if (!isValid(received)){
 				System.out.println("Checksum on ack not valid");
-				resends++;
-				send(msg); //kaller seg selv. hvis vi fortsatt ikke mottar ACK, return
-				resends = 0;
-				return;
+				if (resends < MAXRESENDS) {
+					resends++;
+					send(msg); //kaller seg selv. hvis vi fortsatt ikke mottar ACK, return
+					resends = 0;
+					return;
+				}
+				
 			} else if (received.getAck() < nextSequenceNo-1) {
 				System.out.println("recieved ack for previous packet, renseding. ");
+				nextSequenceNo--;
 				send(msg);
 				return;
 			} else if (received.getAck() > nextSequenceNo-1) {
 				System.out.println("Requested sequence number to high. ");
-				resends++;
-				send(msg); //kaller seg selv. hvis vi fortsatt ikke mottar ACK, return
-				resends = 0;
-				return;
+				if (resends < MAXRESENDS) {
+					resends++;
+					send(msg); //kaller seg selv. hvis vi fortsatt ikke mottar ACK, return
+					resends = 0;
+					return;
+				}
 			}
 		}
 	}

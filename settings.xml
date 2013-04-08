@@ -9,6 +9,6 @@
   <onlydata>true</onlydata>
   <serverAddress>localhost</serverAddress>
   <serverport>10500</serverport>
-  <simpleConnection>true</simpleConnection>
+  <simpleConnection>false</simpleConnection>
 </root>
 
