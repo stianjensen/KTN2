@@ -278,7 +278,7 @@ public class ConnectionImpl extends AbstractConnection {
 			}
 			state = State.FIN_WAIT_1;
 			KtnDatagram ack = receiveAck();
-			if (ack != null || ack.getFlag() == Flag.ACK) {
+			if (ack != null && ack.getFlag() == Flag.ACK) {
 				state = State.FIN_WAIT_2;
 			} else {
 				throw new IOException();
