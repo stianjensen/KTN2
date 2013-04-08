@@ -1,4 +1,4 @@
 KTN2
 ====
 
-Because, yeah.
+Sending and receiving data over a poor network connection.
