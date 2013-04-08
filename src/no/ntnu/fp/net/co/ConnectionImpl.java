@@ -291,7 +291,7 @@ public class ConnectionImpl extends AbstractConnection {
 			if (ack != null && ack.getFlag() == Flag.ACK) {
 				state = State.FIN_WAIT_2;
 			} else {
-				throw new IOException();
+				throw new IOException("Didn't receive ack");
 			}
 			KtnDatagram fin = receivePacket(true);
 			if (fin != null && fin.getFlag() == Flag.FIN) {
@@ -309,6 +309,7 @@ public class ConnectionImpl extends AbstractConnection {
 			state = State.CLOSED;
 			break;
 		case CLOSE_WAIT:
+			sendAck(oldPacket, false);
 			try {
 				simplySendPacket(constructInternalPacket(Flag.FIN));
 			} catch (ClException e) {
