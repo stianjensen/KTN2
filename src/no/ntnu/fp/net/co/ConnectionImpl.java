@@ -54,13 +54,26 @@ public class ConnectionImpl extends AbstractConnection {
     	System.out.println(state);
     }
 
-    private String getIPv4Address() {
+    public ConnectionImpl(String myAddress, int newPort, String remoteAddress, int remotePort) {
+		this.myAddress = myAddress;
+		this.myPort = newPort;
+		this.remoteAddress = remoteAddress;
+		this.remotePort = remotePort;
+		state = State.SYN_RCVD;
+		
+	}
+
+	private String getIPv4Address() {
         try {
             return InetAddress.getLocalHost().getHostAddress();
         }
         catch (UnknownHostException e) {
             return "127.0.0.1";
         }
+    }
+    
+    private int getNewPort() {
+    	return (int) Math.random()*30000+10000;
     }
 
     /**
@@ -85,14 +98,22 @@ public class ConnectionImpl extends AbstractConnection {
     		simplySendPacket(packet);
     	} catch (IOException e) {
     		System.out.println("ioexception");
+    		e.printStackTrace();
     	} catch (ClException e) {
     		System.out.println("clexception");
+    		e.printStackTrace();
     	}
-    	
+    	state = State.SYN_SENT;
     	KtnDatagram received = receiveAck();
-    	
-    	sendAck(constructInternalPacket(Flag.ACK), false);
-    	
+    	if (received != null) {
+    		state = State.SYN_RCVD;
+    		if (received.getFlag() == Flag.SYN_ACK) {
+    			state = State.ESTABLISHED;
+    			sendAck(received, false);
+    		}
+    	} else {
+    		throw new SocketTimeoutException(); 
+    	}
     }
 
     /**
@@ -104,15 +125,28 @@ public class ConnectionImpl extends AbstractConnection {
     public Connection accept() throws IOException, SocketTimeoutException {
         //throw new NotImplementedException();
     	System.out.println("accept");
-    	KtnDatagram packet = receivePacket(true);
+    	state = State.LISTEN;
+    	KtnDatagram packet;
     	
-    	sendAck(packet, true);
+    	do {
+    		packet = receivePacket(true);
+    		System.out.println(packet);
+    	} while (packet == null || packet.getFlag() != Flag.SYN);
+    	this.remoteAddress = packet.getSrc_addr();
+    	this.remotePort = packet.getSrc_port();
+    	state = State.SYN_RCVD;
+    	ConnectionImpl connection = new ConnectionImpl(myAddress, getNewPort(), remoteAddress, remotePort);
+    	connection.sendAck(packet, true);
     	
-    	KtnDatagram ack = receiveAck();
-    	// her skal man nok passe på at ACK-en stemmer (siden det kan være feil i nivå 2)
+    	KtnDatagram ack = connection.receiveAck();
+    	
+    	if (ack == null || ack.getFlag() != Flag.ACK){
+    		throw new SocketTimeoutException();
+    	}
     	System.out.println("accepted");
-    	
-    	return this;
+    	connection.state = State.ESTABLISHED;
+    	state = State.LISTEN;
+    	return connection;
     }
 
     /**
@@ -128,6 +162,7 @@ public class ConnectionImpl extends AbstractConnection {
      * @see no.ntnu.fp.net.co.Connection#send(String)
      */
     public void send(String msg) throws ConnectException, IOException {
+    	state = State.ESTABLISHED;
         //throw new NotImplementedException();
     	KtnDatagram packet = constructDataPacket(msg);
     	sendDataPacketWithRetransmit(packet);
@@ -169,10 +204,13 @@ public class ConnectionImpl extends AbstractConnection {
     	
     	KtnDatagram packet = constructInternalPacket(Flag.FIN);
     	sendDataPacketWithRetransmit(packet);
+    	state = State.FIN_WAIT_1;
     	KtnDatagram received = receiveAck();
-    	
+    	state = State.FIN_WAIT_2;
     	KtnDatagram receivedPacket = receivePacket(true);
     	sendAck(constructInternalPacket(Flag.ACK), false);
+    	state = State.TIME_WAIT;
+    	state = State.CLOSED;
     }
 
     /**
