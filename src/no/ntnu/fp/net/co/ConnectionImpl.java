@@ -166,8 +166,6 @@ public class ConnectionImpl extends AbstractConnection {
      * @see no.ntnu.fp.net.co.Connection#send(String)
      */
     public void send(String msg) throws ConnectException, IOException {
-    	state = State.ESTABLISHED;
-        //throw new NotImplementedException();
     	KtnDatagram packet = constructDataPacket(msg);
     	sendDataPacketWithRetransmit(packet);
     	KtnDatagram received = receiveAck();
@@ -189,13 +187,17 @@ public class ConnectionImpl extends AbstractConnection {
      * @see AbstractConnection#sendAck(KtnDatagram, boolean)
      */
     public String receive() throws ConnectException, IOException {
-        //throw new NotImplementedException();
     	System.out.println("datoramagram");
-    	KtnDatagram packet = receivePacket(true);
+    	KtnDatagram packet;
+		try {
+			packet = receivePacket(true);
+		} catch (EOFException e) {
+			state = State.CLOSE_WAIT;
+			throw new EOFException();
+		}
     	System.out.println("packolini: " + packet);
     	sendAck(packet, false);
     	return (String) packet.getPayload();
-    	// her bør vi finne en måte å returnere meldingen fra pakken... toString() (oh, please god!) eller (*grøss*) (String) Object.getStuff()...
     }
 
     /**
@@ -205,9 +207,55 @@ public class ConnectionImpl extends AbstractConnection {
      */
     public void close() throws IOException {
     	//state = State.CLOSED;
+    	switch (state) {
+    	case SYN_RCVD:
+    	case ESTABLISHED:
+    		KtnDatagram packet = constructInternalPacket(Flag.FIN);
+    		try {
+        		simplySendPacket(packet);
+        	} catch (IOException e) {
+        		System.out.println("ioexception");
+        		e.printStackTrace();
+        	} catch (ClException e) {
+        		System.out.println("clexception");
+        		e.printStackTrace();
+        	}
+    		state = State.FIN_WAIT_1;
+    		KtnDatagram ack = receiveAck();
+    		if (ack != null || ack.getFlag() == Flag.ACK) {
+    			state = State.FIN_WAIT_2;
+    		} else {
+    			throw new IOException();
+    		}
+    		KtnDatagram fin = receivePacket(true);
+    		if (fin != null || fin.getFlag() == Flag.FIN) {
+    			sendAck(fin, false);
+    			state = State.TIME_WAIT;
+    			try {
+					wait(TIMEOUT);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+    			state = State.CLOSED;
+    		}
+    		break;
+    	case LISTEN:
+    		state = State.CLOSED;
+    		break;
+    	case CLOSE_WAIT:
+    		try {
+				simplySendPacket(constructInternalPacket(Flag.FIN));
+			} catch (ClException e) {
+				e.printStackTrace();
+			}
+    		state = State.LAST_ACK;
+    		KtnDatagram closeAck = receiveAck();
+    		if (closeAck != null || closeAck.getFlag() == Flag.ACK){
+    			state = State.CLOSED;
+    		}
+    		break;
+    	}
     	
-    	KtnDatagram packet = constructInternalPacket(Flag.FIN);
-    	sendDataPacketWithRetransmit(packet);
     	state = State.FIN_WAIT_1;
     	KtnDatagram received = receiveAck();
     	state = State.FIN_WAIT_2;
