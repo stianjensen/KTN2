@@ -176,10 +176,10 @@ public class ConnectionImpl extends AbstractConnection {
 			throw new ConnectException("Connection not established");
 
 		KtnDatagram packet = constructDataPacket(msg);
-		sendDataPacketWithRetransmit(packet);
-		KtnDatagram received = receiveAck();
 		
-		if(received == null || received.getFlag() == Flag.NONE) {
+		KtnDatagram received = sendDataPacketWithRetransmit(packet);
+		
+		if(received == null) {
 			System.out.println("no ACK received");
 			if(resends < MAXRESENDS) {
 				resends++;
@@ -191,6 +191,24 @@ public class ConnectionImpl extends AbstractConnection {
 				// Connection is lost
 				state = State.CLOSED;
 				throw new ConnectException("Connection lost");
+			}
+		} else {
+			if (!isValid(received)){
+				System.out.println("Checksum on ack not valid");
+				resends++;
+				send(msg); //kaller seg selv. hvis vi fortsatt ikke mottar ACK, return
+				resends = 0;
+				return;
+			} else if (received.getAck() < nextSequenceNo-1) {
+				System.out.println("recieved ack for previous packet, renseding. ");
+				send(msg);
+				return;
+			} else if (received.getAck() > nextSequenceNo-1) {
+				System.out.println("Requested sequence number to high. ");
+				resends++;
+				send(msg); //kaller seg selv. hvis vi fortsatt ikke mottar ACK, return
+				resends = 0;
+				return;
 			}
 		}
 	}
