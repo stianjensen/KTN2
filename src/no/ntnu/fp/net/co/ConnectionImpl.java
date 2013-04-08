@@ -225,7 +225,7 @@ public class ConnectionImpl extends AbstractConnection {
 			}
 		} else {
 			System.out.println("packolini: " + packet);
-			if (packet.getChecksum() == packet.calculateChecksum()) {
+			if (isValid(packet)) {
 				sendAck(packet, false);
 				packet = oldPacket;
 				return (String) packet.getPayload();
@@ -303,6 +303,6 @@ public class ConnectionImpl extends AbstractConnection {
 	 * @return true if packet is free of errors, false otherwise.
 	 */
 	protected boolean isValid(KtnDatagram packet) {
-		return true;
+		return packet.getChecksum() == packet.calculateChecksum();
 	}
 }
