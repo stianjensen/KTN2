@@ -178,8 +178,8 @@ public class ConnectionImpl extends AbstractConnection {
 		KtnDatagram packet = constructDataPacket(msg);
 		sendDataPacketWithRetransmit(packet);
 		KtnDatagram received = receiveAck();
-
-		if(received == null) {
+		
+		if(received == null || received.getFlag() == Flag.NONE) {
 			System.out.println("no ACK received");
 			if(resends < MAXRESENDS) {
 				resends++;
