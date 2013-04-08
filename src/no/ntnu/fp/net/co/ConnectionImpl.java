@@ -39,7 +39,9 @@ public class ConnectionImpl extends AbstractConnection {
     /** Keeps track of the used ports for each server port. */
     private static Map<Integer, Boolean> usedPorts = Collections.synchronizedMap(new HashMap<Integer, Boolean>());
     private final int MAXRESENDS = 5;
+    private final int MAXRECEIVES = 5;
     private int resends = 0;
+    private int receives = 0;
     
 
     /**
@@ -181,6 +183,7 @@ public class ConnectionImpl extends AbstractConnection {
     		if(resends < MAXRESENDS) {
     			resends++;
     			send(msg); //kaller seg selv. hvis vi fortsatt ikke mottar ACK, return
+    			resends = 0;
     			return;
     		}
     		else {
@@ -188,8 +191,6 @@ public class ConnectionImpl extends AbstractConnection {
     			state = State.CLOSED;
     			System.out.println("Connection lost");
     		}
-    	} else {
-    		resends = 0;
     	}
     }
 
@@ -210,9 +211,16 @@ public class ConnectionImpl extends AbstractConnection {
 			state = State.CLOSE_WAIT;
 			throw new EOFException();
 		}
-    	System.out.println("packolini: " + packet);
-    	sendAck(packet, false);
-    	return (String) packet.getPayload();
+		if (packet == null) {
+			if (receives < MAXRECEIVES) {
+				receives++;
+				return receive();
+			}
+		} else {
+			System.out.println("packolini: " + packet);
+	    	sendAck(packet, false);
+	    	return (String) packet.getPayload();
+		}
     }
 
     /**
