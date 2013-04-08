@@ -40,6 +40,7 @@ public class ConnectionImpl extends AbstractConnection {
     private static Map<Integer, Boolean> usedPorts = Collections.synchronizedMap(new HashMap<Integer, Boolean>());
     private final int MAXRESENDS = 5;
     private int resends = 0;
+	private KtnDatagram oldPacket;
     
 
     /**
@@ -211,8 +212,15 @@ public class ConnectionImpl extends AbstractConnection {
 			throw new EOFException();
 		}
     	System.out.println("packolini: " + packet);
-    	sendAck(packet, false);
-    	return (String) packet.getPayload();
+    	if (packet.getChecksum() == packet.calculateChecksum()) {
+    		sendAck(packet, false);
+    		packet = oldPacket;
+    		return (String) packet.getPayload();
+    	} else {
+    		sendAck(oldPacket, false);
+    		return receive();
+    	}
+    	
     }
 
     /**
