@@ -183,12 +183,12 @@ public class ConnectionImpl extends AbstractConnection {
 			System.out.println("no ACK received");
 			if(resends < MAXRESENDS) {
 				resends++;
-				send(msg); //kaller seg selv. hvis vi fortsatt ikke mottar ACK, return
+				send(msg);
 				resends = 0;
 				return;
 			}
 			else {
-				//kommer vi så langt er connection lost
+				// Connection is lost
 				state = State.CLOSED;
 				throw new ConnectException("Connection lost");
 			}
@@ -215,6 +215,7 @@ public class ConnectionImpl extends AbstractConnection {
 
 		if (packet == null) {
 			if (receives < MAXRECEIVES) {
+				System.out.println("Still no packet? This is my " + receives + " try!");
 				receives++;
 				String msg = receive();
 				receives = 0;
@@ -224,7 +225,6 @@ public class ConnectionImpl extends AbstractConnection {
 				throw new ConnectException();
 			}
 		} else {
-			System.out.println("packolini: " + packet);
 			if (isValid(packet)) {
 				sendAck(packet, false);
 				oldPacket = packet;
