@@ -106,10 +106,11 @@ public class ConnectionImpl extends AbstractConnection {
     	state = State.SYN_SENT;
     	KtnDatagram received = receiveAck();
     	if (received != null) {
+    		this.remotePort = received.getSrc_port();
     		state = State.SYN_RCVD;
     		if (received.getFlag() == Flag.SYN_ACK) {
-    			state = State.ESTABLISHED;
     			sendAck(received, false);
+    			state = State.ESTABLISHED;
     		}
     	} else {
     		throw new SocketTimeoutException(); 
@@ -140,13 +141,16 @@ public class ConnectionImpl extends AbstractConnection {
     	
     	KtnDatagram ack = connection.receiveAck();
     	
-    	if (ack == null || ack.getFlag() != Flag.ACK){
-    		throw new SocketTimeoutException();
+    	if (ack != null) {
+    		System.out.println("ACK is not null");
+    		if (ack.getFlag() == Flag.ACK) {
+	    		System.out.println("accepted");
+	        	connection.state = State.ESTABLISHED;
+	        	state = State.LISTEN;
+	        	return connection;
+    		}
     	}
-    	System.out.println("accepted");
-    	connection.state = State.ESTABLISHED;
-    	state = State.LISTEN;
-    	return connection;
+    	throw new SocketTimeoutException();
     }
 
     /**
