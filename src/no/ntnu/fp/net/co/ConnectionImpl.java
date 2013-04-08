@@ -214,7 +214,12 @@ public class ConnectionImpl extends AbstractConnection {
 		if (packet == null) {
 			if (receives < MAXRECEIVES) {
 				receives++;
-				return receive();
+				String msg = receive();
+				receives = 0;
+				return msg;
+			} else {
+				state = state.CLOSED;
+				throw new ConnectException();
 			}
 		} else {
 			System.out.println("packolini: " + packet);
