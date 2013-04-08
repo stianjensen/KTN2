@@ -248,6 +248,9 @@ public class ConnectionImpl extends AbstractConnection {
 				state = state.CLOSED;
 				throw new ConnectException();
 			}
+		} else if (packet.getSrc_addr() != this.remoteAddress || packet.getSrc_port() != this.remotePort){
+			System.out.println("unrecognized sender, CALL THE GHOAST-BUSTERS!");
+			return receive();
 		} else {
 			if (isValid(packet)) {
 				sendAck(packet, false);
@@ -258,6 +261,7 @@ public class ConnectionImpl extends AbstractConnection {
 				sendAck(oldPacket, false);
 				return receive();
 			}
+			
 		}
 
 	}
