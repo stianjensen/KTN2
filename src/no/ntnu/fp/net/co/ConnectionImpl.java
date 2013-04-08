@@ -190,7 +190,7 @@ public class ConnectionImpl extends AbstractConnection {
 			else {
 				//kommer vi så langt er connection lost
 				state = State.CLOSED;
-				System.out.println("Connection lost");
+				throw new ConnectException("Connection lost");
 			}
 		}
 	}
