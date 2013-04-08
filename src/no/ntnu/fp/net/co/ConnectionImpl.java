@@ -38,6 +38,9 @@ public class ConnectionImpl extends AbstractConnection {
 
     /** Keeps track of the used ports for each server port. */
     private static Map<Integer, Boolean> usedPorts = Collections.synchronizedMap(new HashMap<Integer, Boolean>());
+    private final int MAXRESENDS = 5;
+    private int resends = 0;
+    
 
     /**
      * Initialise initial sequence number and setup state machine.
@@ -166,18 +169,29 @@ public class ConnectionImpl extends AbstractConnection {
      * @see no.ntnu.fp.net.co.Connection#send(String)
      */
     public void send(String msg) throws ConnectException, IOException {
-    	state = State.ESTABLISHED;
-        //throw new NotImplementedException();
+    	if(state != State.ESTABLISHED)
+    		throw new ConnectException("Connection not established");
+    	
     	KtnDatagram packet = constructDataPacket(msg);
     	sendDataPacketWithRetransmit(packet);
     	KtnDatagram received = receiveAck();
-//    	try {
-//    		simplySendPacket(packet);
-//    	} catch (IOException e) {
-//    		System.out.println("ioexception");
-//    	} catch (ClException e) {
-//    		System.out.println("clexception");
-//    	}
+    	
+    	if(received == null) {
+    		System.out.println("no ACK received");
+    		if(resends < MAXRESENDS) {
+    			resends++;
+    			send(msg); //kaller seg selv. hvis vi fortsatt ikke mottar ACK, return
+    			resends = 0;
+    			return;
+    		}
+    		else {
+    			//kommer vi så langt er connection lost
+    			state = State.CLOSED;
+    			System.out.println("Connection lost");
+    		}
+    	}
+    	
+    	
     }
 
     /**
