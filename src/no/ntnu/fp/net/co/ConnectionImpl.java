@@ -243,7 +243,7 @@ public class ConnectionImpl extends AbstractConnection {
 				throw new ConnectException();
 			}
 
-		} else if (isGhostPacket(packet)){
+		} else if (!isGhostPacket(packet)){
 			System.out.println("If you see a little ghost walking down the street, what'cha gonna' do? CALL THE GHOST-BUSTERS! duuu-du-duuu-du-dudeldu");
 			return receive();
 		} else {
