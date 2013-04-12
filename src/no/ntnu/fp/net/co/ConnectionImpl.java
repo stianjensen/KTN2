@@ -74,6 +74,7 @@ public class ConnectionImpl extends AbstractConnection {
 			return InetAddress.getLocalHost().getHostAddress();
 		}
 		catch (UnknownHostException e) {
+			e.printStackTrace();
 			return "127.0.0.1";
 		}
 	}
@@ -153,7 +154,7 @@ public class ConnectionImpl extends AbstractConnection {
 				System.out.println("accepted");
 				connection.state = State.ESTABLISHED;
 				state = State.LISTEN;
-				return connection;
+				return (Connection) connection;
 			}
 		}
 		throw new SocketTimeoutException();
@@ -238,25 +239,33 @@ public class ConnectionImpl extends AbstractConnection {
 				receives = 0;
 				return msg;
 			} else {
-				state = state.CLOSED;
+				state = State.CLOSED;
 				throw new ConnectException();
 			}
-		} else if (!packet.getSrc_addr().equals(this.remoteAddress) || packet.getSrc_port() != this.remotePort) {
-			System.out.println("unrecognized sender, CALL THE GHOAST-BUSTERS!");
+
+		} else if (isGhostPacket(packet)){
+			System.out.println("If you see a little ghost walking down the street, what'cha gonna' do? CALL THE GHOST-BUSTERS! duuu-du-duuu-du-dudeldu");
 			return receive();
 		} else {
 			if (isValid(packet)) {
-				sendAck(packet, false);
-				oldPacket = packet;
-				return (String) packet.getPayload();
+				if (isVlaidSeq_nr(packet)) {
+					sendAck(packet, false);
+					oldPacket = packet;
+					return (String) packet.getPayload();
+				} else {
+					System.out.println("Wrong sequence number");
+					sendAck(oldPacket, false);
+					return receive();
+				}
 			} else {
-				System.out.println("!!!!!!wrong checksum!!!!!");
-				sendAck(oldPacket, false);
-				return receive();
+				if (oldPacket != null) {
+					System.out.println("Wrong checksum");
+					sendAck(oldPacket, false);
+					return receive();
+				}
 			}
-			
 		}
-
+		return receive();
 	}
 
 	/**
@@ -329,4 +338,19 @@ public class ConnectionImpl extends AbstractConnection {
 	protected boolean isValid(KtnDatagram packet) {
 		return packet.getChecksum() == packet.calculateChecksum();
 	}
+	
+	private boolean isGhostPacket(KtnDatagram packet) {
+		if(packet.getSrc_addr() != null) {
+			return !(packet.getSrc_addr().equals(this.remoteAddress) && packet.getSrc_port() != (this.remotePort));
+		}
+		return true;
+	}
+	
+	private boolean isVlaidSeq_nr(KtnDatagram packet) {
+		if (oldPacket != null && packet.getSeq_nr()-1 != oldPacket.getSeq_nr()) {
+			return false;
+		}
+		return true;
+	}
+
 }
