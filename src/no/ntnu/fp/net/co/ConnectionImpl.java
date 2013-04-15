@@ -143,7 +143,7 @@ public class ConnectionImpl extends AbstractConnection {
 		this.remoteAddress = packet.getSrc_addr();
 		this.remotePort = packet.getSrc_port();
 		state = State.SYN_RCVD;
-		ConnectionImpl connection = new ConnectionImpl(myAddress, getNewPort(), remoteAddress, remotePort);
+		ConnectionImpl connection = new ConnectionImpl(this.myAddress, getNewPort(), this.remoteAddress, this.remotePort);
 		connection.sendAck(packet, true);
 
 		KtnDatagram ack = connection.receiveAck();
@@ -221,6 +221,7 @@ public class ConnectionImpl extends AbstractConnection {
 	 * @see AbstractConnection#receivePacket(boolean)
 	 * @see AbstractConnection#sendAck(KtnDatagram, boolean)
 	 */
+	
 	public String receive() throws ConnectException, IOException {
 		System.out.println("datoramagram");
 		KtnDatagram packet;
@@ -243,8 +244,12 @@ public class ConnectionImpl extends AbstractConnection {
 				throw new ConnectException();
 			}
 
-		} else if (!isGhostPacket(packet)){
+		} else if (isGhostPacket(packet)){
 			System.out.println("If you see a little ghost walking down the street, what'cha gonna' do? CALL THE GHOST-BUSTERS! duuu-du-duuu-du-dudeldu");
+			System.out.println("------------------------------------------------------------\n" +
+					"Address was expected to be: "+ this.remoteAddress + " but was: " + packet.getSrc_addr() + 
+					"\nPort was expected to be: " + this.remotePort + " but was: " + packet.getSrc_port() +
+					"\n------------------------------------------------------------");
 			return receive();
 		} else {
 			if (isValid(packet)) {
@@ -267,6 +272,7 @@ public class ConnectionImpl extends AbstractConnection {
 		}
 		return receive();
 	}
+
 
 	/**
 	 * Close the connection.
@@ -341,7 +347,7 @@ public class ConnectionImpl extends AbstractConnection {
 	
 	private boolean isGhostPacket(KtnDatagram packet) {
 		if(packet.getSrc_addr() != null) {
-			return !(packet.getSrc_addr().equals(this.remoteAddress) && packet.getSrc_port() != (this.remotePort));
+			return !(packet.getSrc_addr().equals(this.remoteAddress) && packet.getSrc_port() == (this.remotePort));
 		}
 		return true;
 	}
