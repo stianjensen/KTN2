@@ -185,7 +185,7 @@ public class ConnectionImpl extends AbstractConnection {
 		KtnDatagram received = sendDataPacketWithRetransmit(packet);
 		
 		if(received == null) {
-			System.out.println("no ACK received");
+			System.out.println("no ACK received, seq_nr: " + packet.getSeq_nr());
 			if(resends < MAXRESENDS) {
 				System.out.println("resending, try no. " + resends);
 				resends++;
