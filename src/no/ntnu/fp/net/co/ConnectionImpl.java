@@ -256,7 +256,7 @@ public class ConnectionImpl extends AbstractConnection {
 			return receive();
 		} else {
 			if (isValid(packet)) {
-				if (isVlaidSeq_nr(packet)) {
+				if (isValidSeqNr(packet)) {
 					sendAck(packet, false);
 					oldPacket = packet;
 					return (String) packet.getPayload();
@@ -355,7 +355,7 @@ public class ConnectionImpl extends AbstractConnection {
 		return true;
 	}
 	
-	private boolean isVlaidSeq_nr(KtnDatagram packet) {
+	private boolean isValidSeqNr(KtnDatagram packet) {
 		if (oldPacket != null && packet.getSeq_nr()-1 != oldPacket.getSeq_nr()) {
 			return false;
 		}
