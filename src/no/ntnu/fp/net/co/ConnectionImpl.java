@@ -217,6 +217,8 @@ public class ConnectionImpl extends AbstractConnection {
 				return;
 			} else {
 				oldPacket = received;
+				System.out.println("Ack was received. " + received.getAck());
+				System.out.println("Last received packet seq nr: " + received.getSeq_nr());
 			}
 		}
 	}
