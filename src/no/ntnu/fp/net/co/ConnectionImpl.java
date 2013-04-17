@@ -114,6 +114,8 @@ public class ConnectionImpl extends AbstractConnection {
 		KtnDatagram received = receiveAck();
 		if (received != null) {
 			this.remotePort = received.getSrc_port();
+			this.remoteAddress = received.getSrc_addr();
+			System.out.println("-------------------------------------\nremote adress is set to: " + this.remoteAddress+ "\nremote address for SYN_ACK packet is: "+received.getSrc_addr());
 			state = State.SYN_RCVD;
 			if (received.getFlag() == Flag.SYN_ACK) {
 				sendAck(received, false);
@@ -140,6 +142,7 @@ public class ConnectionImpl extends AbstractConnection {
 			packet = receivePacket(true);
 			System.out.println(packet);
 		} while (packet == null || packet.getFlag() != Flag.SYN);
+		
 		this.remoteAddress = packet.getSrc_addr();
 		this.remotePort = packet.getSrc_port();
 		state = State.SYN_RCVD;
