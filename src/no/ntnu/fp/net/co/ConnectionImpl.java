@@ -176,6 +176,7 @@ public class ConnectionImpl extends AbstractConnection {
 	 * @see no.ntnu.fp.net.co.Connection#send(String)
 	 */
 	public void send(String msg) throws ConnectException, IOException {
+		System.out.println("sendmethod");
 		if(state != State.ESTABLISHED)
 			throw new ConnectException("Connection not established");
 
@@ -212,6 +213,8 @@ public class ConnectionImpl extends AbstractConnection {
 				nextSequenceNo--;
 				send(msg); //kaller seg selv. hvis vi fortsatt ikke mottar ACK, return
 				return;
+			} else {
+				oldPacket = received;
 			}
 		}
 	}
@@ -226,7 +229,7 @@ public class ConnectionImpl extends AbstractConnection {
 	 */
 	
 	public String receive() throws ConnectException, IOException {
-		System.out.println("datoramagram");
+		System.out.println("recievemethod");
 		KtnDatagram packet;
 		try {
 			packet = receivePacket(false);
@@ -256,7 +259,7 @@ public class ConnectionImpl extends AbstractConnection {
 			return receive();
 		} else {
 			if (isValid(packet)) {
-				if (isValidSeqNr(packet)) {
+				if (isValidSeq_nr(packet)) {
 					sendAck(packet, false);
 					oldPacket = packet;
 					return (String) packet.getPayload();
@@ -355,7 +358,7 @@ public class ConnectionImpl extends AbstractConnection {
 		return true;
 	}
 	
-	private boolean isValidSeqNr(KtnDatagram packet) {
+	private boolean isValidSeq_nr(KtnDatagram packet) {
 		if (oldPacket != null && packet.getSeq_nr()-1 != oldPacket.getSeq_nr()) {
 			return false;
 		}
