@@ -187,7 +187,9 @@ public class ConnectionImpl extends AbstractConnection {
 		if(received == null) {
 			System.out.println("no ACK received");
 			if(resends < MAXRESENDS) {
+				System.out.println("resending, try no. " + resends);
 				resends++;
+				nextSequenceNo--;
 				send(msg);
 				resends = 0;
 				return;
